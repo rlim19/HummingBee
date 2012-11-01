@@ -19,7 +19,7 @@ Viterbi <- function (Q, initialProb, emissionProb, blockSizes = NULL) {
 
       viterbi <- .Fortran("vit", n.i, m, log(initialProb),
          emissionProb[(cumulative.n + 1):(cumulative.n + n.i),], Q,
-         integer(n.i), matrix(double(n.i * m), nrow = n.i), package = "BaumWelchT")
+         integer(n.i), matrix(double(n.i * m), nrow = n.i), package = "HummingBee")
 
       ViterbiPath[(cumulative.n + 1):(cumulative.n + n.i)] <- viterbi[[6]]
       cumulative.n <- cumulative.n + n.i

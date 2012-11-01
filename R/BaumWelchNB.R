@@ -1,15 +1,5 @@
 BaumWelch.NB <- function (x, y = NULL, m, Q = NULL, alpha = NULL, theta.x = NULL,
    initialProb = NULL, maxiter = 500, tol = 1e-05, dig = 3)
-# Author: Guillaume Filion.
-# Date: October 8, 2009.
-# Returns the estimate of the HMM with emissions distributed as multi dimensional
-# correlated T variables.
-# x is the vector (or a list of vectors) of observations.
-# y the vector (or list of vectors) of observations of the control experiment.
-# Q is the transition matrix. mu and sd and nu are the parameters of the model.
-# p is the dimension of the T variables and m is the number of states.
-# filter is a circular filter applied to x, to account for positional dependence.
-# Its coefficients should be positive and add up to 1.
 
 {
 
@@ -99,7 +89,7 @@ BaumWelch.NB <- function (x, y = NULL, m, Q = NULL, alpha = NULL, theta.x = NULL
 
    oldLogLikelihood <- -Inf
 
-   phi <- matrix(NA_real_, nrow = n, ncol = m)
+   phi <- emissionProb <- matrix(NA_real_, nrow = n, ncol = m)
 
    # Tabulation saves a lot of time at the M step.
    counts <- c(sum(concat.x + concat.y == 0), tabulate(bin = concat.x
@@ -157,7 +147,7 @@ BaumWelch.NB <- function (x, y = NULL, m, Q = NULL, alpha = NULL, theta.x = NULL
          forwardback <- .Fortran("fwdb", as.integer(m), as.integer(n.i), initialProb, 
             emissionProb[(cumulative.n + 1):(cumulative.n + n.i),], Q, double(n.i),
             matrix(double(n.i * m), nrow = n.i), matrix(double(m^2), nrow = m), double(1),
-            PACKAGE = "BaumWelchT")
+            PACKAGE = "HummingBee")
 
          logLikelihood <<- logLikelihood + forwardback[[9]]
          phi[(cumulative.n + 1):(cumulative.n + n.i),] <<- forwardback[[7]]
@@ -200,11 +190,12 @@ BaumWelch.NB <- function (x, y = NULL, m, Q = NULL, alpha = NULL, theta.x = NULL
       while (no.upper.bound) {
          zeta <- sumPhi.x / (sumPhi.y + new.alpha*sumPhi)
          ksi <- (1+zeta) * sum((sumPhi.x + sumPhi.y + new.alpha*sumPhi) / (n*(1 + zeta)))
+# Version with constraint:
          if (sum(counts*digamma(new.alpha + levels)) / n - digamma(new.alpha) +
             log(new.alpha) - sum(sumPhi*log(ksi)) / n > 0) {
 # Version without constraint:
 #        if (sum(counts*digamma(new.alpha + levels)) / n - digamma(new.alpha) +
-#           log(new.alpha) - sum(sumPhi*log(mean.x + mean.y + new.alpha)) / n
+#           log(new.alpha) - sum(sumPhi*log(mean.x + mean.y + new.alpha)) / n > 0) {
             lower.bound <- new.alpha
             new.alpha <- 2 * new.alpha
          }
@@ -213,7 +204,7 @@ BaumWelch.NB <- function (x, y = NULL, m, Q = NULL, alpha = NULL, theta.x = NULL
             upper.bound <- new.alpha
          }
       }
-      # alpha is estimated with a precision of 0.01.
+      # alpha is estimated with a precision of 0.0001.
       while (upper.bound - lower.bound > 0.0001) {
          new.alpha <- (upper.bound + lower.bound) / 2
          zeta <- sumPhi.x / (sumPhi.y + new.alpha*sumPhi)
@@ -253,5 +244,3 @@ BaumWelch.NB <- function (x, y = NULL, m, Q = NULL, alpha = NULL, theta.x = NULL
    return(list(logL = logLikelihood, Q = Q, alpha = alpha, theta.x =
       theta.x, theta.y = theta.y, vPath = vPath, iterations = iter))
 }
-
-
