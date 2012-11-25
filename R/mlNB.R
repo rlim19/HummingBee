@@ -13,8 +13,6 @@ mlNB <- function(x, tol=1e-6) {
       a <- new.a
       num <- sum(tab*digamma(a+u)) - n*digamma(a) + n*log(a/(m+a))
       denom <- sum(tab*trigamma(a+u)) - n*trigamma(a) + n*m/(a*(m+a))
-      #num <- sum(digamma(a+x)) - n*digamma(a) + n*log(a/(m+a))
-      #denom <- sum(trigamma(a+x)) - n*trigamma(a) + n*m/(a*(m+a))
       new.a <- a - num/denom
    }
 
